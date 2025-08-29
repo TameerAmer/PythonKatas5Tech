@@ -20,14 +20,20 @@ class IP:
     def _is_valid_ip(self, address: str) -> bool:
         """
         Validates an IPv4 address.
-
-        Args:
-            address: The address string to validate.
-
-        Returns:
-            True if valid, False otherwise.
         """
-        raise NotImplementedError("Validation logic not implemented.")
+        parts = address.split(".")
+        if len(parts) != 4:
+            return False
+        for p in parts:
+            if not p.isdigit():
+                return False
+            # Disallow leading zeros (except single zero)
+            if len(p) > 1 and p[0] == '0':
+                return False
+            n = int(p)
+            if n < 0 or n > 255:
+                return False
+        return True
 
     def __str__(self):
         return self.address
@@ -36,49 +42,42 @@ class IP:
         return isinstance(other, IP) and self.address == other.address
 
     def __hash__(self):
-        raise NotImplementedError("hashCode logic not implemented.")
+        return hash(self.address)
 
 
 class RoundRobinLoadBalancer:
     """
     Implements a round-robin load balancer.
-
-    A load balancer distributes requests to a pool of EC2 instances.
-    This implementation routes requests in a circular (a.k.a. round-robin) manner.
     """
 
     def __init__(self):
-        """
-        Initializes the load balancer with an empty pool of servers.
-        """
-        raise NotImplementedError("Constructor not implemented.")
+        self._servers: list[IP] = []
+        self._index: int = 0
 
     def add_server(self, server: IP):
-        """
-        Adds a server instance to the load balancer.
-
-        Args:
-            server: An IP instance representing the server to add.
-        """
-        raise NotImplementedError("add_server not implemented.")
+        if server in self._servers:
+            return
+        self._servers.append(server)
 
     def remove_server(self, server: IP):
-        """
-        Removes a server instance from the load balancer.
-
-        Args:
-            server: An IP instance representing the server to remove.
-        """
-        raise NotImplementedError("remove_server not implemented.")
+        if server not in self._servers:
+            return
+        removed_index = self._servers.index(server)
+        self._servers.remove(server)
+        # Adjust index: if we removed a server before or at current index, shift back one
+        if self._servers:
+            if removed_index < self._index or self._index >= len(self._servers):
+                self._index = self._index % len(self._servers)
+        else:
+            self._index = 0
 
     def route_request(self) -> IP | None:
-        """
-        Routes a request to the next server in round-robin order.
+        if not self._servers:
+            return None
+        server = self._servers[self._index]
+        self._index = (self._index + 1) % len(self._servers)
+        return server
 
-        Returns:
-            The IP instance of the server handling the request, or None if no servers are available.
-        """
-        raise NotImplementedError("route_request not implemented.")
 
 
 if __name__ == '__main__':
